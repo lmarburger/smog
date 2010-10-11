@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Larry Marburger"]
   s.email       = ["larry@marburger.cc"]
-  s.homepage    = "http://github.com/cloudapp/smog"
+  s.homepage    = "http://github.com/lmarburger/smog"
   s.summary     = %q{Test the CloudApp API from the command line}
   s.description = %q{Smog simply outputs a curl command to use to test the CloudApp API}
 

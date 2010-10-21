@@ -1,3 +1,4 @@
+require 'smog'
 require 'main'
 
 Main do

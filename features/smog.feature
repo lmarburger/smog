@@ -1,28 +1,25 @@
-Feature: Food
-  In order to see test the CloudApp items API
+Feature: Smog
+  In order to test that an API respects 304s
   As a user
-  I want to see a lit of items
+  I want to query an API
 
   Scenario: Get items
-    When I run "smog curl --user test@example.com:pass"
-    Then the output should contain exactly:
+    When I run the command:
       """
-      curl -I --digest -u test@example.com:pass -H "Accept: application/json" "http://my.cloudapp.local/items?page=1&per_page=5"
-
+      smog auth=test@example.com:pass "http://my.cloudapp.local/items?page=1&per_page=5"
       """
-
-  Scenario: Get items with etag
-    When I run "smog curl --etag abc123"
-    Then the output should contain exactly:
+    Then the output should contain:
       """
-      curl -I -H "If-None-Match: \"abc123\"" -H "Accept: application/json" "http://my.cloudapp.local/items?page=1&per_page=5"
-
+      curl -I -s --digest -u test@example.com:pass -H "Accept: application/json" "http://my.cloudapp.local/items?page=1&per_page=5"
+          HTTP/1.1 401 Authorization Required
+          HTTP/1.1 200 OK
       """
-
-  Scenario: Get items with last-modified
-    When I run "smog curl --last-modified \"Tue, 05 Oct 2010 13:44:39 GMT\""
-    Then the output should contain exactly:
+    And the output should match:
       """
-      curl -I -H "If-Modified-Since: Tue, 05 Oct 2010 13:44:39 GMT" -H "Accept: application/json" "http://my.cloudapp.local/items?page=1&per_page=5"
-
+      curl -I -s --digest -u test@example.com:pass -H "If-None-Match: \\"[^"]+\\"" -H "If-Modified-Since: [\w,: ]+" -H "Accept: application/json" "http://my.cloudapp.local/items\?page=1&per_page=5"
+      """
+    And the output should contain:
+      """
+          HTTP/1.1 401 Authorization Required
+          HTTP/1.1 304 Not Modified
       """

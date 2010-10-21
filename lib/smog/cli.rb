@@ -1,8 +1,28 @@
-require 'thor'
-require 'smog'
+require 'main'
 
-module Smog
-  class CLI < Thor
+Main do
+  version Smog::VERSION
+
+  argument 'url' do
+    description 'url to query'
+  end
+
+  keyword 'auth' do
+    required
+    description 'digest auth credentials'
+  end
+
+  def run
+    2.times do
+      new_command = curl
+
+      @last_response = %x[#{ new_command }]
+      puts_response new_command, @last_response
+    end
+  end
+
+  private
+
     # Basic curl command:
     # curl
     #   --digest -u "test@example.com:pass"
@@ -10,41 +30,48 @@ module Smog
     #   -H "If-None-Match: \"05122c59185e3bcf8b9a1976d46c2040\""
     #   -H "If-Modified-Since: Tue, 05 Oct 2010 13:44:39 GMT"
     #   "http://my.cloudapp.local/items?page=1&per_page=5"
-
-    desc 'curl', 'Prints the curl command to fetch items'
-    method_option :user,          :aliases => '-u'
-    method_option :etag,          :aliases => '-e'
-    method_option :last_modified, :aliases => '-l'
     def curl
-      print build_command(options)
+      [ 'curl -I -s' ].tap do |command|
+        command << "--digest -u #{ params[:auth].value }"
+
+        if etag
+          command << header('If-None-Match', %{\\"#{ etag }\\"})
+        end
+
+        if last_modified
+          command << header('If-Modified-Since', last_modified)
+        end
+
+        command << header('Accept', 'application/json')
+        command << "#{ params[:url].value.inspect }\n"
+      end.join ' '
     end
 
-    private
+    def header(name, value)
+      %{-H "#{ name }: #{ value }"}
+    end
 
-      def build_command(options)
-        [ 'curl -I' ].tap do |command|
-          command << "--digest -u #{ options[:user] }" if options[:user]
+    def etag
+      return unless @last_response
 
-          if options[:etag]
-            command << header('If-None-Match', %{\\"#{ options[:etag] }\\"})
-          end
+      etag = @last_response.match(/ETag: "(.*)"/)[1].chomp
+    end
 
-          if options[:last_modified]
-            command << header('If-Modified-Since', options[:last_modified])
-          end
+    def last_modified
+      return unless @last_response
 
-          command << header('Accept', 'application/json')
-          command << "#{ url }\n"
-        end.join ' '
+      last_modified = @last_response.match(/Last-Modified: (.*)/)[1].chomp
+    end
+
+    def puts_response(curl, full_response)
+      puts curl
+
+      full_response.split("\r\n\r\n").each do |response|
+        status = response.split("\r\n").first
+        puts "    #{ status }"
       end
 
-      def header(name, value)
-        %{-H "#{ name }: #{ value }"}
-      end
+      puts
+    end
 
-      def url
-        '"http://my.cloudapp.local/items?page=1&per_page=5"'
-      end
-
-  end
 end

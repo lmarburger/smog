@@ -14,7 +14,9 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = ">= 1.3.6"
 
-  s.add_dependency "thor"
+  s.add_dependency "main"
+  s.add_dependency "fattr"
+  s.add_dependency "net-http-digest_auth"
 
   s.add_development_dependency "rspec"
   s.add_development_dependency "cucumber"

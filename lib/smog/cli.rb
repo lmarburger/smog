@@ -14,10 +14,10 @@ Main do
 
   def run
     2.times do
-      new_command = curl
+      command = build_curl
 
-      @last_response = %x[#{ new_command }]
-      puts_response new_command, @last_response
+      @last_response = %x(#{ command })
+      puts_response command, @last_response
     end
   end
 
@@ -30,10 +30,11 @@ Main do
     #   -H "If-None-Match: \"05122c59185e3bcf8b9a1976d46c2040\""
     #   -H "If-Modified-Since: Tue, 05 Oct 2010 13:44:39 GMT"
     #   "http://my.cloudapp.local/items?page=1&per_page=5"
-    def curl
-      [ 'curl -I -s' ].tap do |command|
-        command << "--digest -u #{ params[:auth].value }"
-
+    def build_curl
+      [ 'curl -I -s',
+        "--digest -u #{ params[:auth].value }",
+        header('Accept', 'application/json')
+      ].tap do |command|
         if etag
           command << header('If-None-Match', %{\\"#{ etag }\\"})
         end
@@ -42,8 +43,7 @@ Main do
           command << header('If-Modified-Since', last_modified)
         end
 
-        command << header('Accept', 'application/json')
-        command << "#{ params[:url].value.inspect }\n"
+        command << params[:url].value.inspect
       end.join ' '
     end
 
@@ -52,19 +52,21 @@ Main do
     end
 
     def etag
-      return unless @last_response
-
-      etag = @last_response.match(/ETag: "(.*)"/)[1].chomp
+      response_header /ETag: "(.*)"/
     end
 
     def last_modified
-      return unless @last_response
-
-      last_modified = @last_response.match(/Last-Modified: (.*)/)[1].chomp
+      response_header /Last-Modified: (.*)/
     end
 
-    def puts_response(curl, full_response)
-      puts curl
+    def response_header(match_header)
+      return unless @last_response
+
+      @last_response.match(match_header)[1].chomp
+    end
+
+    def puts_response(command, full_response)
+      puts command
 
       full_response.split("\r\n\r\n").each do |response|
         status = response.split("\r\n").first

@@ -2,9 +2,7 @@ PATH
   remote: .
   specs:
     smog (0.0.2)
-      fattr
       main
-      net-http-digest_auth
 
 GEM
   remote: http://rubygems.org/
@@ -30,7 +28,6 @@ GEM
     main (4.2.0)
       arrayfields (>= 4.7.4)
       fattr (>= 2.1.0)
-    net-http-digest_auth (1.0)
     rspec (2.0.1)
       rspec-core (~> 2.0.1)
       rspec-expectations (~> 2.0.1)
@@ -49,8 +46,6 @@ PLATFORMS
 DEPENDENCIES
   aruba
   cucumber
-  fattr
   main
-  net-http-digest_auth
   rspec
   smog!
